@@ -640,19 +640,9 @@ class Provider(provider.Provider):
         return Response(atr.to_json(), content="application/json")
 
     def password_grant_type(self, areq):
-        _at = self.token_handler.get_access_token(areq['client_id'],
-                                                  scope=areq['scope'],
-                                                  grant_type='password')
-        _info = self.token_handler.token_factory.get_info(_at)
-        try:
-            _rt = self.token_handler.get_refresh_token(
-                self.baseurl, _info['access_token'], 'password')
-        except NotAllowed:
-            atr = self.do_access_token_response(_at, _info, areq['state'])
-        else:
-            atr = self.do_access_token_response(_at, _info, areq['state'], _rt)
-
-        return Response(atr.to_json(), content="application/json")
+        _at = self.sdb.upgrade_to_token(key=areq['password'], issue_refresh=True)
+        atr = AccessTokenResponse(**by_schema(AccessTokenResponse, **_at))
+        return Response(atr.to_json(), content="application/json", headers=OAUTH2_NOCACHE_HEADERS)
 
     def refresh_token_grant_type(self, areq):
         at = self.token_handler.refresh_access_token(

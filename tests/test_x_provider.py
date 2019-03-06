@@ -16,6 +16,7 @@ from oic.oauth2.message import AccessTokenRequest
 from oic.oauth2.message import AccessTokenResponse
 from oic.oauth2.message import AuthorizationRequest
 from oic.oauth2.message import AuthorizationResponse
+from oic.oauth2.message import ROPCAccessTokenRequest
 from oic.oauth2.message import TokenErrorResponse
 from oic.utils.authn.authn_context import AuthnBroker
 from oic.utils.authn.client import verify_client
@@ -447,3 +448,30 @@ class TestProvider(object):
         assert resp
         ti_resp = TokenIntrospectionResponse().deserialize(resp.message, 'json')
         assert ti_resp['active'] is False
+
+    def test_password_grant_type_ok(self):
+        authreq = AuthorizationRequest(state="state",
+                                       redirect_uri="http://example.com/authz",
+                                       client_id="client1")
+
+        _sdb = self.provider.sdb
+        sid = _sdb.access_token.key(user="sub", areq=authreq)
+        self.provider.set_token_policy('client1', {'grant_type': ['password']})
+        access_grant = _sdb.access_token(sid=sid, response_type=['code'], target_id='client1')
+        _sdb[sid] = {
+            "oauth_state": "authz",
+            "sub": "sub",
+            "authzreq": authreq.to_json(),
+            "client_id": "client1",
+            "code": access_grant,
+            "code_used": False,
+            "redirect_uri": "http://example.com/authz",
+            'response_type': ['code'],
+        }
+        # Password based on sid in this case
+        areq = ROPCAccessTokenRequest(grant_type='password', username='client1', password=sid)
+        areq['client_id'] = 'client1'  # Token endpoint would fill that in based on authn
+        resp = self.provider.password_grant_type(areq)
+
+        atr = AccessTokenResponse().deserialize(resp.message, "json")
+        assert _eq(atr.keys(), ['access_token', 'token_type', 'refresh_token'])
