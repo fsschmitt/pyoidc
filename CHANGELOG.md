@@ -24,6 +24,7 @@ The format is based on the [KeepAChangeLog] project.
         making it into a stand-alone example easy for beginners to take on 
 - [#624] token_endpoint implementation and kwargs have been changed
 - [#629] Duplicated methods in oic.oic classes were removed.
+- [#631] Refactored message type handling in Client/Provider.
 
 ### Added
 - [#441] CookieDealer now accepts secure and httponly params
@@ -40,6 +41,7 @@ The format is based on the [KeepAChangeLog] project.
 [#56]: https://github.com/OpenIDC/pyoidc/issues/56
 [#624]: https://github.com/OpenIDC/pyoidc/pull/624
 [#629]: https://github.com/OpenIDC/pyoidc/issues/629
+[#631]: https://github.com/OpenIDC/pyoidc/issues/631
 
 ## 0.15.1 [2019-01-31]
 
