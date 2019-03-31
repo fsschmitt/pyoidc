@@ -14,7 +14,7 @@ The format is based on the [KeepAChangeLog] project.
 - [#607] Fixed key recovery on encryption of payload
 - [#618] Prettified `client_management.py` CLI and wrapped it as
          a setup.py console script `oic-client-management`
-- [#615] Fir ROPC grant in the extensions client
+- [#615] Fix ROPC grant in the extensions provider
 
 ### Changed
 - [#578] Dropped python 2.7 support
