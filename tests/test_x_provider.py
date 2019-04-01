@@ -119,16 +119,21 @@ def test_lv_pack_unpack():
 
 
 class DummyAuthn(UserAuthnMethod):
-    def __init__(self, srv, user):
+    def __init__(self, srv, user, password=None):
         UserAuthnMethod.__init__(self, srv)
         self.user = user
+        self.password = password
 
     def authenticated_as(self, cookie=None, **kwargs):
+        if self.password is not None and kwargs.get('password') != self.password:
+            return None, 0
         return {"uid": self.user}, time.time()
 
 
 AUTHN_BROKER = AuthnBroker()
 AUTHN_BROKER.add("UNDEFINED", DummyAuthn(None, "username"))
+AUTHN_BROKER2 = AuthnBroker()
+AUTHN_BROKER2.add("UNDEFINED", DummyAuthn(None, "username", "password"))
 # dealing with authorization
 AUTHZ = Implicit()
 
@@ -450,28 +455,34 @@ class TestProvider(object):
         assert ti_resp['active'] is False
 
     def test_password_grant_type_ok(self):
-        authreq = AuthorizationRequest(state="state",
-                                       redirect_uri="http://example.com/authz",
-                                       client_id="client1")
-
-        _sdb = self.provider.sdb
-        sid = _sdb.access_token.key(user="sub", areq=authreq)
+        # Set a not so dummy Authn method and token policy
+        self.provider.authn_broker = AUTHN_BROKER2
         self.provider.set_token_policy('client1', {'grant_type': ['password']})
-        access_grant = _sdb.access_token(sid=sid, response_type=['code'], target_id='client1')
-        _sdb[sid] = {
-            "oauth_state": "authz",
-            "sub": "sub",
-            "authzreq": authreq.to_json(),
-            "client_id": "client1",
-            "code": access_grant,
-            "code_used": False,
-            "redirect_uri": "http://example.com/authz",
-            'response_type': ['code'],
-        }
-        # Password based on sid in this case
-        areq = ROPCAccessTokenRequest(grant_type='password', username='client1', password=sid)
-        areq['client_id'] = 'client1'  # Token endpoint would fill that in based on authn
+        areq = ROPCAccessTokenRequest(grant_type='password', username='username', password='password')
+        areq['client_id'] = 'client1'  # Token endpoint would fill that in based on client_authn
         resp = self.provider.password_grant_type(areq)
 
         atr = AccessTokenResponse().deserialize(resp.message, "json")
         assert _eq(atr.keys(), ['access_token', 'token_type', 'refresh_token'])
+
+    def test_password_grant_type_no_authn(self):
+        # Set a blank AuthnBroker
+        self.provider.authn_broker = AuthnBroker()
+        self.provider.set_token_policy('client1', {'grant_type': ['password']})
+        areq = ROPCAccessTokenRequest(grant_type='password', username='username', password='password')
+        areq['client_id'] = 'client1'  # Token endpoint would fill that in based on client_authn
+        resp = self.provider.password_grant_type(areq)
+
+        atr = TokenErrorResponse().deserialize(resp.message, "json")
+        assert atr['error'] == 'invalid_grant'
+
+    def test_password_grant_type_bad(self):
+        # Set a not so dummy Authn method and token policy
+        self.provider.authn_broker = AUTHN_BROKER2
+        self.provider.set_token_policy('client1', {'grant_type': ['password']})
+        areq = ROPCAccessTokenRequest(grant_type='password', username='username', password='bad_password')
+        areq['client_id'] = 'client1'  # Token endpoint would fill that in based on client_authn
+        resp = self.provider.password_grant_type(areq)
+
+        atr = TokenErrorResponse().deserialize(resp.message, "json")
+        assert atr['error'] == 'invalid_grant'

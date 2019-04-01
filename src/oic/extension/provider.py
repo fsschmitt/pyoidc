@@ -54,6 +54,7 @@ from oic.utils.keyio import KeyBundle
 from oic.utils.keyio import KeyJar
 from oic.utils.sanitize import sanitize
 from oic.utils.sdb import AccessCodeUsed
+from oic.utils.sdb import AuthnEvent
 from oic.utils.time_util import utc_time_sans_frac
 from oic.utils.token_handler import NotAllowed
 from oic.utils.token_handler import TokenHandler
@@ -640,7 +641,28 @@ class Provider(provider.Provider):
         return Response(atr.to_json(), content="application/json")
 
     def password_grant_type(self, areq):
-        _at = self.sdb.upgrade_to_token(key=areq['password'], issue_refresh=True)
+        """
+        Token authorization using Resource owner password credentials.
+
+        RFC6749 section 4.3
+        """
+        # `Any` comparison tries a first broker, so we either hit an IndexError or get a method
+        try:
+            authn, authn_class_ref = self.pick_auth(areq, "any")
+        except IndexError:
+            err = TokenErrorResponse(error='invalid_grant')
+            return Unauthorized(err.to_json(), content='application/json')
+        identity, _ts = authn.authenticated_as(username=areq['username'], password=areq['password'])
+        if identity is None:
+            err = TokenErrorResponse(error='invalid_grant')
+            return Unauthorized(err.to_json(), content='application/json')
+        # We are returning a token
+        areq['response_type'] = ['token']
+        authn_event = AuthnEvent(identity["uid"], identity.get('salt', ''),
+                                 authn_info=authn_class_ref,
+                                 time_stamp=_ts)
+        sid = self.setup_session(areq, authn_event, self.cdb[areq['client_id']])
+        _at = self.sdb.upgrade_to_token(self.sdb[sid]['code'], issue_refresh=True)
         atr = AccessTokenResponse(**by_schema(AccessTokenResponse, **_at))
         return Response(atr.to_json(), content="application/json", headers=OAUTH2_NOCACHE_HEADERS)
 
