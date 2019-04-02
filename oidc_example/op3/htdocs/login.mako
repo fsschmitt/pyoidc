@@ -16,10 +16,9 @@
                 <td><input type="password" name="password"
                 value="${password}"/></td>
             </tr>
-            <tr>
-                </td>
-                <td><input type="submit" name="form.commit"
-                        value="${submit_text}"/></td>
+            <tr class="submit-btn-row">
+                <input class="submit-btn" type="submit" name="form.commit"
+                        value="${submit_text}"/>
             </tr>
         </table>
     </form>
