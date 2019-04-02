@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 LOC = {
     "en": {
-        "title": "User log in",
+        "title": "OpenID Auth",
         "login_title": "Username",
         "passwd_title": "Password",
         "submit_text": "Submit",
