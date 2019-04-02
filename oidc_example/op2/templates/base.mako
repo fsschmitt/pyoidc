@@ -4,6 +4,7 @@ In this file all the imports of external libraries should be declared.
 -->
 <html ng-app="main">
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <%block name="meta"/>
         <script src="/static/bootstrap/js/bootstrap.min.js"></script>
         <%block name="script"/>
