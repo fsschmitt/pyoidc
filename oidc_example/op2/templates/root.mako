@@ -23,6 +23,7 @@
 ${self.css()}
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/jquery/jquery-3.3.1.min.js"></script>
 <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
 </head>
