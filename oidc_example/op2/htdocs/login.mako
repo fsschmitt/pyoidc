@@ -17,8 +17,10 @@
                 value="${password}"/></td>
             </tr>
             <tr class="submit-btn-row">
-                <input class="submit-btn" type="submit" name="form.commit"
+                <td>
+                    <input class="submit-btn" type="submit" name="form.commit"
                         value="${submit_text}"/>
+                </td>
             </tr>
         </table>
     </form>
