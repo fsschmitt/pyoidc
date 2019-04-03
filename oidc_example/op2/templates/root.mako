@@ -26,6 +26,7 @@ ${self.css()}
 <script src="/static/jquery/jquery-3.3.1.min.js"></script>
 <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<link href="/css/main.css" rel="stylesheet" media="screen">
 </head>
 <body>
 ${pre()}
